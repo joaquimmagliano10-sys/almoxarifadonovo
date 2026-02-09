@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Almoxarifado</title>
+
+<style>
+  :root{
+    --bg:#f2f4f7;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --primary:#0d6efd;
+    --border:#e5e9f0;
+    --shadow: 0 8px 20px rgba(0,0,0,0.08);
+    --radius:14px;
+    --dark:#111827;
+    --danger:#dc2626;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family: Arial, Helvetica, sans-serif; background:var(--bg); color:var(--text); }
+
+  header{
+    background:var(--dark);
+    color:#fff;
+    padding:14px 18px;
+    font-weight:900;
+    letter-spacing:.2px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .hdrRight{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .chip{
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.18);
+    color:#fff;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+  }
+
+  .wrap{ max-width:1200px; margin:0 auto; padding:18px; }
+
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+
+  /* FIX: texto das abas sempre visível */
+  .tabBtn{
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#fff;
+    cursor:pointer;
+    font-weight:800;
+    color:#111827;
+  }
+  .tabBtn.active{
+    background:var(--primary);
+    color:#fff;
+    border-color:var(--primary);
+  }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:14px;
+  }
+  .gridTop{ display:grid; grid-template-columns: 1.2fr .8fr; gap:14px; }
+  @media (max-width: 980px){ .gridTop{grid-template-columns:1fr} }
+
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .split{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  @media (max-width: 760px){ .split{grid-template-columns:1fr} }
+
+  input, select{
+    padding:10px 12px;
+    border:1px solid #cfd6de;
+    border-radius:10px;
+    outline:none;
+    min-height:40px;
+    background:#fff;
+  }
+  input:focus, select:focus{ border-color:var(--primary); box-shadow:0 0 0 3px rgba(13,110,253,.15); }
+
+  button{
+    padding:10px 12px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:var(--primary);
+    color:#fff;
+    font-weight:800;
+    min-height:40px;
+  }
+  button.secondary{ background:var(--dark); }
+  button.ghost{ background:#eef4ff; color:var(--primary); }
+  button.danger{ background:var(--danger); }
+  button:disabled{ opacity:.6; cursor:not-allowed; }
+
+  h3{ margin:0 0 10px; font-size:16px; }
+  .hint{ color:var(--muted); font-size:12px; margin-top:8px; }
+  hr{ border:none; border-top:1px solid var(--border); margin:12px 0; }
+
+  .kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .kpi{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px; }
+  .kpi .label{ color:var(--muted); font-size:12px; }
+  .kpi .value{ font-size:22px; font-weight:900; margin-top:6px; }
+
+  .productsGrid{ margin-top:14px; display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+  .card{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+  .cardImg{ height:160px; background:#e9eef5; overflow:hidden; }
+  .cardImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .cardBody{ padding:12px; }
+  .title{ margin:0; font-size:16px; font-weight:900; }
+  .meta{ color:var(--muted); font-size:12px; margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; }
+  .badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#eef4ff; color:var(--primary); font-weight:800; }
+  .stock{
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:12px;
+  }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .actions button{ flex:1; min-width:110px; }
+
+  .tableWrap{ max-height:360px; overflow:auto; border:1px solid var(--border); border-radius:12px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th, td{ border-bottom:1px solid var(--border); padding:10px 8px; text-align:left; vertical-align:top; }
+  th{ color:var(--muted); font-weight:800; position:sticky; top:0; background:#fff; }
+  .right{ text-align:right; }
+  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+  .backdrop{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:2000;
+  }
+  .modal{
+    width:min(720px, 100%);
+    background:#fff;
+    border-radius:16px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .modalHeader{
+    padding:14px 16px;
+    background:var(--dark);
+    color:#fff;
+    font-weight:900;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .modalBody{ padding:16px; }
+  .modalFooter{
+    padding:14px 16px;
+    border-top:1px solid var(--border);
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+  }
+</style>
+</head>
+
+<body>
+<header>
+  <div>Almoxarifado</div>
+  <div class="hdrRight">
+    <span class="chip" id="chipUser">—</span>
+
+    <!-- Admin-only -->
+    <button class="ghost" id="btnExportCSV" onclick="exportarCSVHistorico()">Exportar CSV</button>
+    <button class="ghost" id="btnBackupJSON" onclick="exportarJSON()">Backup JSON</button>
+    <button class="ghost" id="btnImportJSON" onclick="importarJSON()">Importar</button>
+
+    <button class="danger" onclick="sair()">Sair</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tabBtn active" id="tabBtnEstoque" onclick="setTab('estoque')">Estoque</button>
+    <button class="tabBtn" id="tabBtnRelatorios" onclick="setTab('relatorios')">Relatórios</button>
+    <button class="tabBtn" id="tabBtnUsuarios" onclick="setTab('usuarios')">Usuários</button>
+  </div>
+
+  <!-- ======== ABA ESTOQUE ======== -->
+  <div id="tabEstoque">
+    <div class="gridTop">
+      <div class="panel">
+        <h3>Cadastro de Produto</h3>
+
+        <div class="split">
+          <div><input id="nome" placeholder="Nome do produto" style="width:100%"></div>
+          <div><input id="unidade" placeholder="Unidade (ex: un, kg, m, L, litros)" style="width:100%"></div>
+        </div>
+
+        <div class="split" style="margin-top:10px;">
+          <div>
+            <input id="categoria" placeholder="Categoria" list="categoriasList" style="width:100%">
+            <datalist id="categoriasList"></datalist>
+          </div>
+          <div><input id="localizacao" placeholder="Localização (ex: Prateleira 1)" style="width:100%"></div>
+        </div>
+
+        <div class="split" style="margin-top:10px;">
+          <div><input id="estoque" placeholder="Estoque inicial (ex: 10 ou 10,5 para L)" style="width:100%"></div>
+          <div><input type="file" id="imagemFile" accept="image/*" capture="environment" style="width:100%"></div>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button onclick="cadastrarProduto()">Cadastrar</button>
+          <button class="secondary" onclick="limparCampos()">Limpar</button>
+          <span class="hint">No celular, o campo de imagem abre a câmera.</span>
+        </div>
+
+        <hr>
+
+        <h3>Pesquisar / Filtrar</h3>
+        <div class="row">
+          <input id="busca" placeholder="Buscar por nome, categoria ou ID..." style="flex:1; min-width:260px;">
+          <input id="filtroCategoria" placeholder="Filtrar por categoria" list="categoriasList" style="min-width:220px;">
+          <button class="ghost" onclick="limparFiltros()">Limpar</button>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <input id="filtroLocal" placeholder="Filtrar por prateleira/local (ex: Prateleira 1)" style="flex:1; min-width:260px;">
+          <button class="ghost" onclick="limparFiltroLocal()">Limpar local</button>
+        </div>
+
+        <div class="hint" id="contador"></div>
+
+        <hr>
+
+        <h3>Ver o que tem em uma prateleira</h3>
+        <div class="row">
+          <input id="pratBusca" placeholder="Digite a prateleira/local (ex: Prateleira 1)" style="flex:1; min-width:260px;">
+          <button onclick="renderPrateleira()">Ver</button>
+        </div>
+
+        <div class="tableWrap" style="margin-top:10px; max-height:260px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Local</th>
+                <th>Produto</th>
+                <th class="right">Qtd</th>
+                <th>Un</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaPrateleira"></tbody>
+          </table>
+        </div>
+        <div class="hint" id="pratContador"></div>
+
+      </div>
+
+      <div class="panel">
+        <h3>Dashboard</h3>
+        <div class="kpis">
+          <div class="kpi"><div class="label">Produtos</div><div class="value" id="kpiProdutos">0</div></div>
+          <div class="kpi"><div class="label">Categorias</div><div class="value" id="kpiCategorias">0</div></div>
+          <div class="kpi"><div class="label">Itens em estoque</div><div class="value" id="kpiItens">0</div></div>
+        </div>
+
+        <hr>
+
+        <h3>Categorias</h3>
+        <div class="row">
+          <input id="novaCategoria" placeholder="Nova categoria" style="flex:1; min-width:220px;">
+          <button onclick="criarCategoria()">Adicionar</button>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <input id="pesquisaCat" placeholder="Pesquisar categoria..." style="flex:1; min-width:220px;">
+        </div>
+
+        <div class="tableWrap" style="margin-top:10px; max-height:220px;">
+          <table>
+            <thead><tr><th>Categoria</th><th class="right">Produtos</th></tr></thead>
+            <tbody id="tabelaCategorias"></tbody>
+          </table>
+        </div>
+
+        <hr>
+
+        <h3>Excluir categoria</h3>
+        <div class="row">
+          <select id="categoriaExcluir" style="flex:1; min-width:220px;"></select>
+          <button class="danger" onclick="excluirCategoria()">Excluir</button>
+        </div>
+        <div class="hint">Ao excluir, os produtos dessa categoria vão para <b>SEM CATEGORIA</b> e isso fica no histórico.</div>
+      </div>
+    </div>
+
+    <div class="productsGrid" id="lista"></div>
+  </div>
+
+  <!-- ======== ABA RELATÓRIOS (ADMIN ONLY) ======== -->
+  <div id="tabRelatorios" style="display:none;">
+    <div class="panel">
+      <h3>Histórico de Movimentações e Auditoria</h3>
+      <div class="row">
+        <input id="relBusca" placeholder="Buscar (produto, usuário, ação, categoria, quem pegou...)" style="flex:1; min-width:260px;">
+        <select id="relAcao" style="min-width:220px;">
+          <option value="">Todas as ações</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SAÍDA">SAÍDA</option>
+          <option value="CADASTRO_PRODUTO">CADASTRO_PRODUTO</option>
+          <option value="EDITOU_PRODUTO">EDITOU_PRODUTO</option>
+          <option value="EXCLUIU_PRODUTO">EXCLUIU_PRODUTO</option>
+          <option value="CRIOU_CATEGORIA">CRIOU_CATEGORIA</option>
+          <option value="EXCLUIU_CATEGORIA">EXCLUIU_CATEGORIA</option>
+          <option value="CRIOU_USUARIO">CRIOU_USUARIO</option>
+          <option value="REMOVEU_USUARIO">REMOVEU_USUARIO</option>
+          <option value="TROCOU_SENHA">TROCOU_SENHA</option>
+        </select>
+        <button class="ghost" onclick="limparFiltrosRel()">Limpar</button>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button onclick="exportarCSVHistorico()">Exportar CSV (Excel)</button>
+        <button class="danger" onclick="limparHistorico()">Limpar histórico</button>
+        <span class="hint">O histórico registra quem fez e quem pegou na saída.</span>
+      </div>
+
+      <div class="tableWrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Usuário</th>
+              <th>Ação</th>
+              <th>Produto</th>
+              <th class="right">Qtd</th>
+              <th class="right">Antes</th>
+              <th class="right">Depois</th>
+              <th>Quem pegou</th>
+              <th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaHistorico"></tbody>
+        </table>
+      </div>
+
+      <div class="hint" id="relContador"></div>
+    </div>
+  </div>
+
+  <!-- ======== ABA USUÁRIOS (ADMIN ONLY) ======== -->
+  <div id="tabUsuarios" style="display:none;">
+    <div class="panel">
+      <h3>Usuários (Admin / Operador)</h3>
+      <div class="hint">Somente <b>ADMIN</b> acessa esta aba.</div>
+
+      <hr>
+
+      <div id="usuariosAdminArea">
+        <h3>Criar usuário</h3>
+        <div class="row">
+          <input id="novoUserNome" placeholder="Usuário (ex: joao)" style="min-width:220px;">
+          <input id="novoUserSenha" type="password" placeholder="Senha" style="min-width:220px;">
+          <select id="novoUserRole" style="min-width:180px;">
+            <option value="OPERADOR">OPERADOR</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+          <button onclick="criarUsuario()">Criar</button>
+        </div>
+
+        <hr>
+      </div>
+
+      <h3>Lista de usuários</h3>
+      <div class="tableWrap">
+        <table>
+          <thead><tr><th>Usuário</th><th>Tipo</th><th class="right">Ações</th></tr></thead>
+          <tbody id="tabelaUsuarios"></tbody>
+        </table>
+      </div>
+
+      <div class="hint">Dica: não apague o único ADMIN.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======== MODAL LOGIN ======== -->
+<div class="backdrop" id="loginBackdrop">
+  <div class="modal">
+    <div class="modalHeader">
+      <div id="loginTitle">Entrar</div>
+      <button class="ghost" disabled>—</button>
+    </div>
+    <div class="modalBody">
+      <div class="hint" id="loginDesc">Digite usuário e senha.</div>
+      <div class="row" style="margin-top:10px;">
+        <input id="loginUser" placeholder="Usuário" style="flex:1; min-width:220px;">
+        <input id="loginPass" type="password" placeholder="Senha" style="flex:1; min-width:220px;">
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button onclick="entrar()">Entrar</button>
+      </div>
+
+      <div id="primeiroAcesso" style="display:none; margin-top:14px;">
+        <hr>
+        <h3 style="margin:0 0 8px;">Primeiro acesso (criar ADMIN)</h3>
+        <div class="hint">Crie o primeiro usuário ADMIN.</div>
+        <div class="row" style="margin-top:10px;">
+          <input id="firstUser" placeholder="Usuário admin (ex: admin)" style="flex:1; min-width:220px;">
+          <input id="firstPass" type="password" placeholder="Senha admin" style="flex:1; min-width:220px;">
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="secondary" onclick="criarPrimeiroAdmin()">Criar ADMIN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== MODAL EDITAR PRODUTO ======== -->
+<div class="backdrop" id="editBackdrop">
+  <div class="modal">
+    <div class="modalHeader">
+      <div>Editar Produto</div>
+      <button class="ghost" onclick="fecharEdit()">Fechar</button>
+    </div>
+    <div class="modalBody">
+      <input type="hidden" id="editId">
+      <div class="split">
+        <div><input id="editNome" placeholder="Nome" style="width:100%"></div>
+        <div><input id="editUnidade" placeholder="Unidade" style="width:100%"></div>
+      </div>
+      <div class="split" style="margin-top:10px;">
+        <div><input id="editCategoria" placeholder="Categoria" list="categoriasList" style="width:100%"></div>
+        <div><input id="editLocalizacao" placeholder="Localização" style="width:100%"></div>
+      </div>
+      <div class="split" style="margin-top:10px;">
+        <div>
+          <input type="file" id="editImagemFile" accept="image/*" capture="environment" style="width:100%">
+          <div class="hint">Se não escolher imagem, mantém a atual.</div>
+        </div>
+        <div>
+          <div class="hint">ID:</div>
+          <div class="mono" style="font-weight:900; font-size:18px;" id="editIdLabel">—</div>
+          <div class="hint">Fica registrado quem editou e o que mudou.</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <input id="editMotivo" placeholder="Motivo/observação da edição (opcional)" style="width:100%">
+      </div>
+    </div>
+    <div class="modalFooter">
+      <button class="secondary" onclick="salvarEdicao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================== STORAGE ================== */
+const STORAGE_KEY = "ALMOX_ERP_V2_PRATELEIRA_LITROS";
+let state = {
+  lastId: 0,
+  produtos: [],
+  categorias: [],
+  historico: [],
+  users: [],
+  session: null
+};
+
+function salvar(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function carregar(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{
+      const obj = JSON.parse(raw);
+      state = Object.assign(state, obj || {});
+      state.produtos = state.produtos || [];
+      state.categorias = state.categorias || [];
+      state.historico = state.historico || [];
+      state.users = state.users || [];
+      state.session = state.session || null;
+      state.lastId = state.lastId || 0;
+    }catch(e){}
+  }
+}
+
+/* ================== UTILS ================== */
+function nowISO(){
+  const d = new Date();
+  const pad = (n)=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function pad6(n){ return String(n).padStart(6,"0"); }
+function gerarID(){ state.lastId += 1; return "P" + pad6(state.lastId); }
+function norm(t){ return (t||"").trim(); }
+function normLower(t){ return norm(t).toLowerCase(); }
+function toNumber(txt){
+  const v = String(txt||"").replace(",",".").trim();
+  if(!v) return 0;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : NaN;
+}
+function placeholderImg(){
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" width="800" height="500">
+    <rect width="100%" height="100%" fill="#e9eef5"/>
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+      font-family="Arial" font-size="36" fill="#6b7280">Sem imagem</text>
+  </svg>`);
+}
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function formatNumber(n){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return "0";
+  if(Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+  return v.toFixed(2).replace(".", ",");
+}
+function isAdmin(){ return state.session && state.session.role === "ADMIN"; }
+function currentUser(){ return state.session ? state.session.username : "—"; }
+function currentRole(){ return state.session ? state.session.role : "—"; }
+function garantirSemCategoria(){
+  if(!state.categorias.includes("SEM CATEGORIA")) state.categorias.push("SEM CATEGORIA");
+}
+
+/* ===== LITROS / FRACIONADO ===== */
+function isLitroUnit(u){
+  const x = (u || "").trim().toLowerCase();
+  return x === "l" || x === "litro" || x === "litros";
+}
+function validarQuantidadePorUnidade(qtd, unidade){
+  if(!Number.isFinite(qtd) || qtd <= 0) return {ok:false, msg:"Quantidade inválida."};
+  if(!isLitroUnit(unidade)){
+    if(Math.abs(qtd - Math.round(qtd)) > 1e-9){
+      return {ok:false, msg:"Para essa unidade, só pode número inteiro (ex: 1, 2, 3)."};
+    }
+  }
+  return {ok:true, msg:""};
+}
+
+/* ================== HISTÓRICO ================== */
+function logEvento(evt){
+  state.historico.unshift({
+    data: nowISO(),
+    usuario: currentUser(),
+    role: currentRole(),
+    acao: evt.acao || "AÇÃO",
+    produtoId: evt.produtoId || "",
+    produtoNome: evt.produtoNome || "",
+    categoria: evt.categoria || "",
+    qtd: (evt.qtd ?? ""),
+    antes: (evt.antes ?? ""),
+    depois: (evt.depois ?? ""),
+    quemPegou: evt.quemPegou || "",
+    detalhes: evt.detalhes || ""
+  });
+  salvar();
+}
+
+/* ================== LOGIN ================== */
+function mostrarLogin(){
+  document.getElementById("loginBackdrop").style.display = "flex";
+  const temUsers = (state.users || []).length > 0;
+  document.getElementById("primeiroAcesso").style.display = temUsers ? "none" : "block";
+  document.getElementById("loginDesc").textContent = temUsers
+    ? "Digite usuário e senha."
+    : "Nenhum usuário encontrado. Crie o primeiro ADMIN.";
+}
+function esconderLogin(){ document.getElementById("loginBackdrop").style.display = "none"; }
+
+function criarPrimeiroAdmin(){
+  const u = norm(document.getElementById("firstUser").value);
+  const p = norm(document.getElementById("firstPass").value);
+  if(u.length < 2) return alert("Usuário muito curto.");
+  if(p.length < 4) return alert("Senha deve ter pelo menos 4 caracteres.");
+  if(state.users.find(x=>x.username.toLowerCase()===u.toLowerCase())) return alert("Usuário já existe.");
+
+  state.users.push({username:u, password:p, role:"ADMIN"});
+  state.session = {username:u, role:"ADMIN"};
+  salvar();
+  logEvento({acao:"CRIOU_USUARIO", detalhes:`Criou usuário ${u} (ADMIN)`});
+  atualizarUIPosLogin();
+  esconderLogin();
+}
+function entrar(){
+  const u = norm(document.getElementById("loginUser").value);
+  const p = norm(document.getElementById("loginPass").value);
+  const user = state.users.find(x=>x.username === u && x.password === p);
+  if(!user){ alert("Usuário ou senha inválidos."); return; }
+  state.session = {username:user.username, role:user.role};
+  salvar();
+  atualizarUIPosLogin();
+  esconderLogin();
+}
+function sair(){ state.session = null; salvar(); location.reload(); }
+
+/* ================== TABS / PERMISSÕES ================== */
+function setTab(tab){
+  // OPERADOR: só pode ver/mexer na ABA ESTOQUE
+  if(!isAdmin()){
+    tab = "estoque";
+  }
+
+  const estoque = document.getElementById("tabEstoque");
+  const rel = document.getElementById("tabRelatorios");
+  const usr = document.getElementById("tabUsuarios");
+
+  estoque.style.display = tab === "estoque" ? "block" : "none";
+  rel.style.display = tab === "relatorios" ? "block" : "none";
+  usr.style.display = tab === "usuarios" ? "block" : "none";
+
+  document.getElementById("tabBtnEstoque").classList.toggle("active", tab==="estoque");
+  document.getElementById("tabBtnRelatorios").classList.toggle("active", tab==="relatorios");
+  document.getElementById("tabBtnUsuarios").classList.toggle("active", tab==="usuarios");
+
+  if(tab==="relatorios") renderHistorico();
+  if(tab==="usuarios") renderUsuarios();
+}
+
+function atualizarUIPosLogin(){
+  document.getElementById("chipUser").textContent = `${currentUser()} • ${currentRole()}`;
+
+  // OPERADOR: só vê Estoque (some Relatórios e Usuários)
+  if(!isAdmin()){
+    document.getElementById("tabBtnRelatorios").style.display = "none";
+    document.getElementById("tabBtnUsuarios").style.display = "none";
+    setTab("estoque");
+  }else{
+    document.getElementById("tabBtnRelatorios").style.display = "inline-block";
+    document.getElementById("tabBtnUsuarios").style.display = "inline-block";
+  }
+
+  // Botões topo: só ADMIN
+  document.getElementById("btnExportCSV").style.display = isAdmin() ? "inline-block" : "none";
+  document.getElementById("btnBackupJSON").style.display = isAdmin() ? "inline-block" : "none";
+  document.getElementById("btnImportJSON").style.display = isAdmin() ? "inline-block" : "none";
+
+  document.getElementById("usuariosAdminArea").style.display = isAdmin() ? "block" : "none";
+
+  atualizarDatalistCategorias();
+  renderCategorias();
+  renderProdutos();
+  renderPrateleira();
+  renderHistorico();
+  renderUsuarios();
+}
+
+/* ================== LOCAL / PRATELEIRA ================== */
+function limparFiltroLocal(){
+  document.getElementById("filtroLocal").value = "";
+  renderProdutos();
+}
+function setLocalFiltro(local){
+  document.getElementById("filtroLocal").value = local;
+  renderProdutos();
+}
+function renderPrateleira(){
+  const termo = (document.getElementById("pratBusca").value || "").trim().toLowerCase();
+  const tbody = document.getElementById("tabelaPrateleira");
+  const cont = document.getElementById("pratContador");
+  if(!tbody || !cont) return;
+
+  if(!termo){
+    tbody.innerHTML = "";
+    cont.textContent = "Digite uma prateleira/localização para listar.";
+    return;
+  }
+
+  const itens = state.produtos
+    .filter(p => ((p.localizacao || "").toLowerCase().includes(termo)))
+    .slice()
+    .sort((a,b)=>{
+      const la = (a.localizacao||"").localeCompare(b.localizacao||"");
+      if(la!==0) return la;
+      return (a.nome||"").localeCompare(b.nome||"");
+    });
+
+  tbody.innerHTML = itens.map(p=>`
+    <tr>
+      <td><span class="badge" style="cursor:pointer" onclick="setLocalFiltro('${escapeHtml(p.localizacao || "")}')">${escapeHtml(p.localizacao || "-")}</span></td>
+      <td>
+        <div style="font-weight:900">${escapeHtml(p.nome)}</div>
+        <div class="hint" style="margin:0">${escapeHtml(p.id)}</div>
+      </td>
+      <td class="right mono">${formatNumber(p.estoque)}</td>
+      <td>${escapeHtml(p.unidade || "un")}</td>
+    </tr>
+  `).join("");
+
+  cont.textContent = `Encontrados: ${itens.length} item(ns) para "${document.getElementById("pratBusca").value}"`;
+}
+
+/* ================== CATEGORIAS ================== */
+function atualizarDatalistCategorias(){
+  const dl = document.getElementById("categoriasList");
+  dl.innerHTML = "";
+  [...new Set(state.categorias)].sort((a,b)=>a.localeCompare(b)).forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c;
+    dl.appendChild(opt);
+  });
+
+  const sel = document.getElementById("categoriaExcluir");
+  const cats = [...new Set(state.categorias)]
+    .filter(c => c !== "SEM CATEGORIA")
+    .sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+}
+
+function criarCategoria(){
+  const cat = norm(document.getElementById("novaCategoria").value);
+  if(!cat) return alert("Digite o nome da categoria.");
+  if(!state.categorias.includes(cat)){
+    state.categorias.push(cat);
+    salvar();
+    logEvento({acao:"CRIOU_CATEGORIA", categoria:cat, detalhes:`Criou categoria "${cat}"`});
+    atualizarDatalistCategorias();
+    renderCategorias();
+    renderProdutos();
+    renderPrateleira();
+  }
+  document.getElementById("novaCategoria").value = "";
+}
+
+function contarProdutosPorCategoria(cat){
+  return state.produtos.filter(p=>p.categoria === cat).length;
+}
+
+function renderCategorias(){
+  const termo = normLower(document.getElementById("pesquisaCat").value);
+  const tbody = document.getElementById("tabelaCategorias");
+
+  const cats = [...new Set(state.categorias)]
+    .filter(c => !termo || c.toLowerCase().includes(termo))
+    .sort((a,b)=>a.localeCompare(b));
+
+  tbody.innerHTML = cats.map(cat => `
+    <tr>
+      <td><span class="badge" style="cursor:pointer" onclick="setFiltroCategoria('${escapeHtml(cat)}')">${escapeHtml(cat)}</span></td>
+      <td class="right">${contarProdutosPorCategoria(cat)}</td>
+    </tr>
+  `).join("");
+}
+
+function setFiltroCategoria(cat){
+  document.getElementById("filtroCategoria").value = cat;
+  renderProdutos();
+}
+
+function excluirCategoria(){
+  const cat = document.getElementById("categoriaExcluir").value;
+  if(!cat) return alert("Nenhuma categoria para excluir.");
+
+  const qtd = contarProdutosPorCategoria(cat);
+  if(!confirm(`Excluir a categoria "${cat}"?\nProdutos nela: ${qtd}\nEles vão para "SEM CATEGORIA".`)) return;
+
+  garantirSemCategoria();
+  state.produtos.forEach(p=>{
+    if(p.categoria === cat){
+      const antes = p.categoria;
+      p.categoria = "SEM CATEGORIA";
+      p.updatedAt = nowISO();
+      logEvento({
+        acao:"EDITOU_PRODUTO",
+        produtoId:p.id,
+        produtoNome:p.nome,
+        categoria:"SEM CATEGORIA",
+        detalhes:`Mudou categoria: "${antes}" → "SEM CATEGORIA" (por exclusão da categoria)`
+      });
+    }
+  });
+
+  state.categorias = state.categorias.filter(c=>c !== cat);
+  salvar();
+  logEvento({acao:"EXCLUIU_CATEGORIA", categoria:cat, detalhes:`Excluiu categoria "${cat}" (moveu produtos para SEM CATEGORIA)`});
+
+  atualizarDatalistCategorias();
+  renderCategorias();
+  renderProdutos();
+  renderPrateleira();
+}
+
+/* ================== PRODUTOS ================== */
+function limparCampos(){
+  document.getElementById("nome").value = "";
+  document.getElementById("unidade").value = "";
+  document.getElementById("categoria").value = "";
+  document.getElementById("localizacao").value = "";
+  document.getElementById("estoque").value = "";
+  document.getElementById("imagemFile").value = "";
+}
+
+function limparFiltros(){
+  document.getElementById("busca").value = "";
+  document.getElementById("filtroCategoria").value = "";
+  document.getElementById("filtroLocal").value = "";
+  renderProdutos();
+}
+
+function cadastrarProduto(){
+  const nome = norm(document.getElementById("nome").value);
+  const unidade = norm(document.getElementById("unidade").value) || "un";
+  const categoria = norm(document.getElementById("categoria").value);
+  const localizacao = norm(document.getElementById("localizacao").value);
+  const estoque = toNumber(document.getElementById("estoque").value);
+
+  if(!nome) return alert("Digite o nome do produto.");
+  if(!categoria) return alert("Digite a categoria.");
+  if(Number.isNaN(estoque) || estoque < 0) return alert("Estoque inválido. Ex: 10 ou 2.5");
+
+  // valida fracionado: só pode se for L/litros
+  if(estoque !== 0){
+    const v = validarQuantidadePorUnidade(estoque, unidade);
+    if(!v.ok) return alert(v.msg);
+  }
+
+  garantirSemCategoria();
+  if(!state.categorias.includes(categoria)) state.categorias.push(categoria);
+
+  const file = document.getElementById("imagemFile").files[0];
+
+  const prod = {
+    id: gerarID(),
+    nome, unidade, categoria, localizacao,
+    estoque: estoque || 0,
+    imagemBase64: placeholderImg(),
+    createdAt: nowISO(),
+    updatedAt: nowISO()
+  };
+
+  const finalizar = () => {
+    state.produtos.push(prod);
+    salvar();
+    logEvento({
+      acao:"CADASTRO_PRODUTO",
+      produtoId:prod.id,
+      produtoNome:prod.nome,
+      categoria:prod.categoria,
+      qtd: prod.estoque,
+      antes: "",
+      depois: prod.estoque,
+      detalhes:`Cadastrou produto. Local: "${prod.localizacao || "-"}", Unidade: "${prod.unidade}"`
+    });
+    atualizarDatalistCategorias();
+    renderCategorias();
+    renderProdutos();
+    renderPrateleira();
+    limparCampos();
+  };
+
+  if(file){
+    const reader = new FileReader();
+    reader.onload = (e)=>{ prod.imagemBase64 = e.target.result; finalizar(); };
+    reader.readAsDataURL(file);
+  }else{
+    finalizar();
+  }
+}
+
+function entradaEstoque(id){
+  const p = state.produtos.find(x=>x.id===id);
+  if(!p) return;
+
+  const q = prompt(`Entrada de estoque: ${p.nome}\nQuantidade (${p.unidade}):`);
+  if(q === null) return;
+  const n = toNumber(q);
+  const v = validarQuantidadePorUnidade(n, p.unidade);
+  if(!v.ok) return alert(v.msg);
+
+  const antes = p.estoque;
+  p.estoque += n;
+  p.updatedAt = nowISO();
+  salvar();
+
+  logEvento({
+    acao:"ENTRADA",
+    produtoId:p.id, produtoNome:p.nome, categoria:p.categoria,
+    qtd:n, antes:antes, depois:p.estoque,
+    detalhes:`Entrada registrada. Local: "${p.localizacao || "-"}"`
+  });
+
+  renderProdutos();
+  renderPrateleira();
+}
+
+function saidaEstoque(id){
+  const p = state.produtos.find(x=>x.id===id);
+  if(!p) return;
+
+  const q = prompt(`Saída de estoque: ${p.nome}\nQuantidade (${p.unidade}):`);
+  if(q === null) return;
+  const n = toNumber(q);
+  const v = validarQuantidadePorUnidade(n, p.unidade);
+  if(!v.ok) return alert(v.msg);
+
+  if(p.estoque < n) return alert(`Estoque insuficiente. Atual: ${p.estoque} ${p.unidade}`);
+
+  const pegou = prompt(`Quem pegou? (nome/usuário/obra)`);
+  if(pegou === null) return;
+
+  const obs = prompt("Observação (opcional):") || "";
+
+  const antes = p.estoque;
+  p.estoque -= n;
+  p.updatedAt = nowISO();
+  salvar();
+
+  logEvento({
+    acao:"SAÍDA",
+    produtoId:p.id, produtoNome:p.nome, categoria:p.categoria,
+    qtd:n, antes:antes, depois:p.estoque,
+    quemPegou: norm(pegou),
+    detalhes: obs
+  });
+
+  renderProdutos();
+  renderPrateleira();
+}
+
+function excluirProduto(id){
+  const p = state.produtos.find(x=>x.id===id);
+  if(!p) return;
+  if(!confirm(`Excluir produto ${p.id} - ${p.nome}?`)) return;
+
+  state.produtos = state.produtos.filter(x=>x.id!==id);
+  salvar();
+
+  logEvento({
+    acao:"EXCLUIU_PRODUTO",
+    produtoId:p.id, produtoNome:p.nome, categoria:p.categoria,
+    qtd:"", antes:p.estoque, depois:"",
+    detalhes:`Excluiu produto. Local: "${p.localizacao || "-"}"`
+  });
+
+  renderCategorias();
+  renderProdutos();
+  renderPrateleira();
+}
+
+/* ====== EDITAR PRODUTO ====== */
+function abrirEdit(id){
+  const p = state.produtos.find(x=>x.id===id);
+  if(!p) return;
+
+  document.getElementById("editId").value = p.id;
+  document.getElementById("editIdLabel").textContent = p.id;
+  document.getElementById("editNome").value = p.nome;
+  document.getElementById("editUnidade").value = p.unidade;
+  document.getElementById("editCategoria").value = p.categoria;
+  document.getElementById("editLocalizacao").value = p.localizacao;
+  document.getElementById("editImagemFile").value = "";
+  document.getElementById("editMotivo").value = "";
+
+  document.getElementById("editBackdrop").style.display = "flex";
+}
+function fecharEdit(){ document.getElementById("editBackdrop").style.display = "none"; }
+
+function salvarEdicao(){
+  const id = document.getElementById("editId").value;
+  const p = state.produtos.find(x=>x.id===id);
+  if(!p) return;
+
+  const nome = norm(document.getElementById("editNome").value);
+  const unidade = norm(document.getElementById("editUnidade").value) || "un";
+  const categoria = norm(document.getElementById("editCategoria").value);
+  const localizacao = norm(document.getElementById("editLocalizacao").value);
+  const motivo = norm(document.getElementById("editMotivo").value);
+
+  if(!nome) return alert("Nome obrigatório.");
+  if(!categoria) return alert("Categoria obrigatória.");
+
+  garantirSemCategoria();
+  if(!state.categorias.includes(categoria)) state.categorias.push(categoria);
+
+  const antes = {...p};
+
+  const aplicar = () => {
+    p.nome = nome;
+    p.unidade = unidade;
+    p.categoria = categoria;
+    p.localizacao = localizacao;
+    p.updatedAt = nowISO();
+    salvar();
+
+    const mud = [];
+    if(antes.nome !== p.nome) mud.push(`nome: "${antes.nome}"→"${p.nome}"`);
+    if(antes.unidade !== p.unidade) mud.push(`unidade: "${antes.unidade}"→"${p.unidade}"`);
+    if(antes.categoria !== p.categoria) mud.push(`categoria: "${antes.categoria}"→"${p.categoria}"`);
+    if(antes.localizacao !== p.localizacao) mud.push(`local: "${antes.localizacao}"→"${p.localizacao}"`);
+    if(antes.imagemBase64 !== p.imagemBase64) mud.push(`imagem: alterada`);
+
+    logEvento({
+      acao:"EDITOU_PRODUTO",
+      produtoId:p.id, produtoNome:p.nome, categoria:p.categoria,
+      qtd:"", antes:antes.estoque, depois:p.estoque,
+      detalhes: (mud.length ? mud.join(" | ") : "Sem mudanças") + (motivo ? ` | Motivo: ${motivo}` : "")
+    });
+
+    atualizarDatalistCategorias();
+    renderCategorias();
+    renderProdutos();
+    renderPrateleira();
+    fecharEdit();
+  };
+
+  const file = document.getElementById("editImagemFile").files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = (e)=>{ p.imagemBase64 = e.target.result; aplicar(); };
+    reader.readAsDataURL(file);
+  }else{
+    aplicar();
+  }
+}
+
+/* ================== RENDER PRODUTOS + KPIs ================== */
+function calcularKPIs(){
+  document.getElementById("kpiProdutos").textContent = state.produtos.length;
+  document.getElementById("kpiCategorias").textContent = new Set(state.categorias).size;
+  const totalItens = state.produtos.reduce((a,p)=>a + (Number(p.estoque)||0), 0);
+  document.getElementById("kpiItens").textContent = formatNumber(totalItens);
+}
+
+function renderProdutos(){
+  const termo = normLower(document.getElementById("busca").value);
+  const filtroCat = normLower(document.getElementById("filtroCategoria").value);
+  const filtroLocal = normLower(document.getElementById("filtroLocal").value);
+
+  let lista = state.produtos.slice();
+
+  if(filtroLocal){
+    lista = lista.filter(p => (p.localizacao || "").toLowerCase().includes(filtroLocal));
+  }
+  if(filtroCat){
+    lista = lista.filter(p => (p.categoria||"").toLowerCase().includes(filtroCat));
+  }
+  if(termo){
+    lista = lista.filter(p=>{
+      const s = `${p.id} ${p.nome} ${p.categoria} ${p.localizacao}`.toLowerCase();
+      return s.includes(termo);
+    });
+  }
+
+  lista.sort((a,b)=>{
+    const c = (a.categoria||"").localeCompare(b.categoria||"");
+    if(c!==0) return c;
+    return (a.nome||"").localeCompare(b.nome||"");
+  });
+
+  document.getElementById("contador").textContent = `Mostrando ${lista.length} de ${state.produtos.length} produto(s).`;
+
+  document.getElementById("lista").innerHTML = lista.map(p=>`
+    <div class="card">
+      <div class="cardImg"><img src="${p.imagemBase64 || placeholderImg()}" alt="${escapeHtml(p.nome)}"></div>
+      <div class="cardBody">
+        <h4 class="title">${escapeHtml(p.nome)}</h4>
+        <div class="meta">
+          <span class="badge">${escapeHtml(p.categoria)}</span>
+          <span class="mono">${escapeHtml(p.id)}</span>
+        </div>
+        <div class="meta">
+          <span>Unidade: ${escapeHtml(p.unidade || "un")}</span>
+          <span>Local: ${escapeHtml(p.localizacao || "-")}</span>
+        </div>
+
+        <div class="stock">
+          <div>
+            <div class="hint" style="margin-top:0">Estoque</div>
+            <strong>${formatNumber(p.estoque)} ${escapeHtml(p.unidade || "un")}</strong>
+          </div>
+          <div class="row" style="gap:8px">
+            <button class="ghost" onclick="entradaEstoque('${p.id}')">+ Entrada</button>
+            <button class="ghost" onclick="saidaEstoque('${p.id}')">- Saída</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="secondary" onclick="abrirEdit('${p.id}')">Editar</button>
+          <button class="danger" onclick="excluirProduto('${p.id}')">Excluir</button>
+        </div>
+
+        <div class="hint">Atualizado: ${escapeHtml(p.updatedAt || "-")}</div>
+      </div>
+    </div>
+  `).join("");
+
+  calcularKPIs();
+}
+
+/* ================== RELATÓRIOS (ADMIN ONLY) ================== */
+function limparFiltrosRel(){
+  document.getElementById("relBusca").value = "";
+  document.getElementById("relAcao").value = "";
+  renderHistorico();
+}
+
+function renderHistorico(){
+  const tbody = document.getElementById("tabelaHistorico");
+  const cont = document.getElementById("relContador");
+  if(!tbody || !cont) return;
+
+  const termo = normLower(document.getElementById("relBusca").value || "");
+  const acao = norm(document.getElementById("relAcao").value || "");
+
+  let linhas = state.historico.slice();
+  if(acao) linhas = linhas.filter(x => x.acao === acao);
+  if(termo){
+    linhas = linhas.filter(x=>{
+      const s = `${x.data} ${x.usuario} ${x.role} ${x.acao} ${x.produtoId} ${x.produtoNome} ${x.categoria} ${x.quemPegou} ${x.detalhes}`.toLowerCase();
+      return s.includes(termo);
+    });
+  }
+
+  tbody.innerHTML = linhas.map(x=>`
+    <tr>
+      <td class="mono">${escapeHtml(x.data)}</td>
+      <td>${escapeHtml(x.usuario)} <span class="hint" style="margin:0">(${escapeHtml(x.role)})</span></td>
+      <td><span class="badge">${escapeHtml(x.acao)}</span></td>
+      <td>
+        <div class="mono">${escapeHtml(x.produtoId || "")}</div>
+        <div>${escapeHtml(x.produtoNome || "")}</div>
+        <div class="hint" style="margin-top:4px;">${escapeHtml(x.categoria || "")}</div>
+      </td>
+      <td class="right mono">${escapeHtml(x.qtd === "" ? "" : formatNumber(x.qtd))}</td>
+      <td class="right mono">${escapeHtml(x.antes === "" ? "" : formatNumber(x.antes))}</td>
+      <td class="right mono">${escapeHtml(x.depois === "" ? "" : formatNumber(x.depois))}</td>
+      <td>${escapeHtml(x.quemPegou || "")}</td>
+      <td>${escapeHtml(x.detalhes || "")}</td>
+    </tr>
+  `).join("");
+
+  cont.textContent = `Registros: ${linhas.length} (total: ${state.historico.length})`;
+}
+
+function limparHistorico(){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+  if(!confirm("Limpar TODO o histórico? Isso não dá para desfazer.")) return;
+  state.historico = [];
+  salvar();
+  renderHistorico();
+}
+
+function exportarCSVHistorico(){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+
+  const header = ["data","usuario","role","acao","produtoId","produtoNome","categoria","qtd","antes","depois","quemPegou","detalhes"];
+  const rows = [header.join(",")];
+
+  const esc = (v)=>{
+    const s = String(v ?? "");
+    if(s.includes('"') || s.includes(",") || s.includes("\n")) return `"${s.replaceAll('"','""')}"`;
+    return s;
+  };
+
+  state.historico.forEach(x=>{
+    rows.push([
+      x.data, x.usuario, x.role, x.acao, x.produtoId, x.produtoNome, x.categoria,
+      x.qtd, x.antes, x.depois, x.quemPegou, x.detalhes
+    ].map(esc).join(","));
+  });
+
+  const blob = new Blob([rows.join("\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "relatorio_historico.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ================== USUÁRIOS (ADMIN ONLY) ================== */
+function contarAdmins(){ return state.users.filter(u=>u.role==="ADMIN").length; }
+
+function renderUsuarios(){
+  const tbody = document.getElementById("tabelaUsuarios");
+  if(!tbody) return;
+
+  const users = state.users.slice().sort((a,b)=>a.username.localeCompare(b.username));
+  tbody.innerHTML = users.map(u=>{
+    const podeApagar = isAdmin() && !(u.role==="ADMIN" && contarAdmins()===1) && (u.username !== currentUser());
+    return `
+      <tr>
+        <td class="mono">${escapeHtml(u.username)}</td>
+        <td>${escapeHtml(u.role)}</td>
+        <td class="right">
+          <button class="ghost" onclick="resetSenhaUsuario('${escapeHtml(u.username)}')" ${isAdmin() ? "" : "disabled"}>Trocar senha</button>
+          <button class="danger" onclick="removerUsuario('${escapeHtml(u.username)}')" ${podeApagar ? "" : "disabled"}>Remover</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function criarUsuario(){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+
+  const username = norm(document.getElementById("novoUserNome").value);
+  const password = norm(document.getElementById("novoUserSenha").value);
+  const role = document.getElementById("novoUserRole").value;
+
+  if(username.length < 2) return alert("Usuário muito curto.");
+  if(password.length < 4) return alert("Senha deve ter pelo menos 4 caracteres.");
+  if(state.users.find(x=>x.username.toLowerCase()===username.toLowerCase())) return alert("Usuário já existe.");
+
+  state.users.push({username, password, role});
+  salvar();
+  logEvento({acao:"CRIOU_USUARIO", detalhes:`Criou usuário ${username} (${role})`});
+
+  document.getElementById("novoUserNome").value = "";
+  document.getElementById("novoUserSenha").value = "";
+  document.getElementById("novoUserRole").value = "OPERADOR";
+
+  renderUsuarios();
+}
+
+function removerUsuario(username){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+
+  const u = state.users.find(x=>x.username===username);
+  if(!u) return;
+
+  if(u.role==="ADMIN" && contarAdmins()===1) return alert("Não pode remover o único ADMIN.");
+  if(u.username === currentUser()) return alert("Você não pode remover você mesmo.");
+  if(!confirm(`Remover usuário "${username}"?`)) return;
+
+  state.users = state.users.filter(x=>x.username!==username);
+  salvar();
+  logEvento({acao:"REMOVEU_USUARIO", detalhes:`Removeu usuário ${username}`});
+  renderUsuarios();
+}
+
+function resetSenhaUsuario(username){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+
+  const u = state.users.find(x=>x.username===username);
+  if(!u) return;
+
+  const nova = prompt(`Nova senha para ${username} (mínimo 4):`);
+  if(nova === null) return;
+  if(norm(nova).length < 4) return alert("Senha muito curta.");
+
+  u.password = norm(nova);
+  salvar();
+  logEvento({acao:"TROCOU_SENHA", detalhes:`Trocou senha do usuário ${username}`});
+  alert("Senha atualizada.");
+}
+
+/* ================== IMPORT/EXPORT JSON (ADMIN ONLY) ================== */
+function exportarJSON(){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "almoxarifado_backup.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importarJSON(){
+  if(!isAdmin()) return alert("Somente ADMIN pode fazer isso.");
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "application/json";
+  input.onchange = () => {
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try{
+        const obj = JSON.parse(e.target.result);
+        if(!obj || typeof obj !== "object") throw new Error("Inválido");
+        if(!Array.isArray(obj.produtos) || !Array.isArray(obj.categorias) || !Array.isArray(obj.historico) || !Array.isArray(obj.users)) {
+          throw new Error("Estrutura inválida");
+        }
+        state = obj;
+        state.lastId = state.lastId || 0;
+        state.session = state.session || null;
+        garantirSemCategoria();
+        salvar();
+        alert("Backup importado.");
+        location.reload();
+      }catch(err){
+        alert("Arquivo inválido.");
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* ================== EVENTS ================== */
+document.getElementById("busca").addEventListener("input", renderProdutos);
+document.getElementById("filtroCategoria").addEventListener("input", renderProdutos);
+document.getElementById("filtroLocal").addEventListener("input", renderProdutos);
+
+document.getElementById("pesquisaCat").addEventListener("input", renderCategorias);
+document.getElementById("pratBusca").addEventListener("input", renderPrateleira);
+
+document.getElementById("relBusca").addEventListener("input", renderHistorico);
+document.getElementById("relAcao").addEventListener("change", renderHistorico);
+
+/* ================== INIT ================== */
+carregar();
+garantirSemCategoria();
+
+if((state.users || []).length === 0){
+  state.session = null;
+  salvar();
+  mostrarLogin();
+}else{
+  if(state.session){
+    atualizarUIPosLogin();
+    esconderLogin();
+  }else{
+    mostrarLogin();
+  }
+}
+
+atualizarDatalistCategorias();
+renderCategorias();
+renderProdutos();
+renderPrateleira();
+renderHistorico();
+renderUsuarios();
+</script>
+
+</body>
+</html>
